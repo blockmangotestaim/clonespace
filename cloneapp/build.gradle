@@ -1,0 +1,36 @@
+// This module is injected into the engine's own Gradle project by the CI workflow,
+// so it uses whatever Android Gradle Plugin / Gradle version the engine uses.
+plugins {
+    id 'com.android.application'
+}
+
+// 64-bit: -PtargetAbi=arm64-v8a (default)   32-bit: -PtargetAbi=armeabi-v7a
+def abi = project.findProperty('targetAbi') ?: 'arm64-v8a'
+
+android {
+    if (project.android.hasProperty('namespace')) {
+        namespace = 'com.example.clonespace'
+    }
+    compileSdkVersion 34
+    defaultConfig {
+        applicationId 'com.example.clonespace'
+        minSdkVersion 21
+        targetSdkVersion 28   // legacy storage + normal permission behavior for virtualized apps
+        versionCode 1
+        versionName '1.0'
+        ndk { abiFilters abi }
+        if (abi == 'armeabi-v7a') applicationIdSuffix '.arm32'   // lets both editions coexist
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    try { packagingOptions { jniLibs { useLegacyPackaging = true } } } catch (Throwable ignored) { }
+}
+
+dependencies {
+    implementation project(':Bcore')   // module name is rewritten by CI from the engine_module input
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.recyclerview:recyclerview:1.3.1'
+    implementation 'com.google.android.material:material:1.9.0'
+}
